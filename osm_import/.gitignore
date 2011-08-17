@@ -1,2 +1,3 @@
-*.o
+Makefile
 osm_import
+*.o
