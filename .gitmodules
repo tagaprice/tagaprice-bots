@@ -1,0 +1,3 @@
+[submodule "osm_import/osmium"]
+	path = osm_import/osmium
+	url = https://github.com/joto/osmium.git
