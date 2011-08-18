@@ -68,14 +68,6 @@ public:
 	}
 
 	/**
-	 * \brief Call _object() for the specified relation
-	 * \param relation Osmium::OSM::Relation to parse
-	 */
-	void relation(const Osmium::OSM::Relation *relation) {
-		_object(relation, m_relationStr);
-	}
-
-	/**
 	 * \brief Call _object() for the specified way
 	 * \param way Osmium::OSM::Way to parse
 	 */

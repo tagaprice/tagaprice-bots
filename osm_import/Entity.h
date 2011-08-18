@@ -56,9 +56,10 @@ public:
 				return;
 			}
 		}
-		else if (const Osmium::OSM::Relation *relation = dynamic_cast<const Osmium::OSM::Relation*>(object)) {
-			lat = -1000;
-			lon = -1000;
+		else {
+			// Relations aren't supported yet
+			clear();
+			return;
 		}
 
 		insert("osm:_lat", lat);
