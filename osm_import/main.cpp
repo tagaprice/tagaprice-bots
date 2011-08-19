@@ -1,8 +1,12 @@
-#include <osmium.hpp>
-#include <cstdio>
 #include "TapOsmHandler.h"
 
+#include <QCoreApplication>
+
+#include <osmium.hpp>
+#include <cstdio>
+
 int main(int argc, char *argv[]) {
+	QCoreApplication app(argc, argv);
 	if (argc <= 1) {
 		fprintf(stderr, "USAGE: %s <infile>\n", argv[0]);
 		exit(1);
