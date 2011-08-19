@@ -75,6 +75,7 @@ public:
 			insert("shopCategoryId", categoryId);
 		}
 		insert("user", "osmImportBot");
+		insert("docType", "shop");
 	}
 
 signals:
