@@ -2,6 +2,7 @@
 # Project created by QtCreator 2011-08-18T00:40:19
 # -------------------------------------------------
 QT -= gui
+QT += network
 TARGET = osm_import
 CONFIG += console
 CONFIG -= app_bundle
