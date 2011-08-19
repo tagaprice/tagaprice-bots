@@ -14,13 +14,17 @@ private:
 	int m_nodeCount;
 	int m_wayCount;
 
-	const char *m_nodeStr;
-	const char *m_wayStr;
+	char m_nodeChar;
+	char m_wayChar;
 
 	QMap<QString, CategoryMapper*> m_categoryMappers;
 	QMap<QString, int> m_tagStats;
 
+	CouchOutput m_output;
+
+	/// Osmium needs this to store the positions of all the nodes
 	TapOsmHandler_NodePosStorage m_posNodes;
+	/// Osmium needs this to store the positions of all the nodes
 	TapOsmHandler_NodePosStorage m_negNodes;
 
 	Osmium::Handler::CoordinatesForWays<TapOsmHandler_NodePosStorage, TapOsmHandler_NodePosStorage> m_coordinateHandler;
@@ -33,8 +37,8 @@ public:
 		m_nodeCount = 0;
 		m_wayCount = 0;
 
-		m_nodeStr = "node";
-		m_wayStr = "way";
+		m_nodeChar = 'n';
+		m_wayChar = 'w';
 
 		_initMappers();
 	}
@@ -55,7 +59,7 @@ public:
 	 */
 	void node(const Osmium::OSM::Node *node) {
 		m_coordinateHandler.node(node);
-		_object(node, m_nodeStr);
+		_object(node, m_nodeChar);
 	}
 
 	/**
@@ -64,7 +68,7 @@ public:
 	 */
 	void way(Osmium::OSM::Way *way) {
 		m_coordinateHandler.way(way);
-		_object(way, m_wayStr);
+		_object(way, m_wayChar);
 	}
 
 	void _initMappers() {
@@ -77,7 +81,7 @@ public:
 		}
 	}
 
-	void _object(const Osmium::OSM::Object *object, const char *typeStr) {
+	void _object(const Osmium::OSM::Object *object, char typeChar) {
 		const char *value = 0;
 		QString categoryId;
 
@@ -100,10 +104,10 @@ public:
 		}
 
 		if (value) {
-			if (typeStr == m_nodeStr) m_nodeCount++;
-			else if (typeStr == m_wayStr) m_wayCount++;
+			if (typeChar == m_nodeChar) m_nodeCount++;
+			else if (typeChar == m_wayChar) m_wayCount++;
 
-			CouchOutput::addObject(Entity(object, typeStr, categoryId));
+			m_output.addObject(Entity(object, typeChar, categoryId));
 		}
 	}
 
@@ -111,6 +115,8 @@ public:
 	 * \brief print some statistics (after everything else has finished)
 	 */
 	void final() {
+		m_output.print();
+
 		fprintf(stderr, "Statistics:\n");
 		foreach (QString tagName, m_tagStats.keys()) {
 			fprintf(stderr, "\t%s: %i\n", tagName.toLocal8Bit().constData(), m_tagStats[tagName]);

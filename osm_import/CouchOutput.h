@@ -6,6 +6,7 @@
 #include <QSet>
 
 #include <osmium.hpp>
+#include <qjson/parser.h>
 #include <qjson/serializer.h>
 
 class CouchOutput {
@@ -13,19 +14,17 @@ class CouchOutput {
 	QSet<qint64> m_existingWays;
 	QSet<qint64> m_existingRelations;
 
+	QVariantList m_entityList;
+
 public:
-	CouchOutput() {
-		printf("[\n");
+
+	void addObject(const Entity &entity) {
+		m_entityList.append(entity);
 	}
 
-	virtual ~CouchOutput() {
-		printf("]\n");
-	}
-
-	static void addObject(const Entity &entity) {
+	void print() {
 		QJson::Serializer serializer;
-
-		printf("%s,\n", serializer.serialize(entity).constData());
+		printf("%s\n", serializer.serialize(m_entityList).constData());
 	}
 };
 

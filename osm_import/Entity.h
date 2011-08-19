@@ -9,19 +9,20 @@
 
 class Entity : public QVariantMap {
 public:
-	explicit Entity(const Osmium::OSM::Object *object, const char *typeStr, const QString &categoryId) {
+	explicit Entity(const Osmium::OSM::Object *object, char typeChar, const QString &categoryId) {
+		QVariantMap osmTags;
+
 		// add properties first (so that they won't be able to overwrite any static data
 		foreach (Osmium::OSM::Tag tag, object->tags()) {
-			QString tagName = QString("osm:%1").arg(tag.key());
-			insert(tagName.toUtf8().constData(), QString::fromUtf8(tag.value()));
+			osmTags.insert(tag.key(), QString::fromUtf8(tag.value()));
 		}
 
 		// add static OSM stuff
-		insert("osm:_id", object->id());
-		insert("osm:_rev", object->version());
-		insert("osm:_type", typeStr);
-		insert("osm:_user", QString::fromUtf8(object->user()));
-		insert("osm:_uid", object->uid());
+		QString osmPrefixedId = QString("%1%2").arg(typeChar).arg(object->id());
+		osmTags.insert("_id", osmPrefixedId);
+		osmTags.insert("_rev", object->version());
+		osmTags.insert("_user", QString::fromUtf8(object->user()));
+		osmTags.insert("_uid", object->uid());
 
 		// get the latitude and longitude
 		double lat, lon;
@@ -62,8 +63,10 @@ public:
 			return;
 		}
 
-		insert("osm:_lat", lat);
-		insert("osm:_lon", lon);
+		osmTags.insert("_lat", lat);
+		osmTags.insert("_lon", lon);
+
+		insert("osm", osmTags);
 
 		// finally add the real stuff
 		insert("lat", lat);
