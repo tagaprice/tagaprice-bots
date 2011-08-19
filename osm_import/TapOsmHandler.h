@@ -8,7 +8,7 @@
 #include <osmium/handler/coordinates_for_ways.hpp>
 #include <osmium/storage/byid.hpp>
 
-typedef Osmium::Storage::Mmap<Osmium::OSM::Position> TapOsmHandler_NodePosStorage;
+typedef Osmium::Storage::SparseTable<Osmium::OSM::Position> TapOsmHandler_NodePosStorage;
 
 class TapOsmHandler: public Osmium::Handler::Base {
 private:
@@ -118,7 +118,7 @@ public:
 	 * \brief print some statistics (after everything else has finished)
 	 */
 	void final() {
-		m_output.print();
+		m_output.save();
 
 		fprintf(stderr, "Statistics:\n");
 		foreach (QString tagName, m_tagStats.keys()) {
@@ -128,5 +128,11 @@ public:
 		fprintf(stderr, "Types:\n");
 		fprintf(stderr, "\tNodes: %i\n", m_nodeCount);
 		fprintf(stderr, "\tWays: %i\n", m_wayCount);
+
+		fprintf(stderr, "NodeCache:\n");
+		fprintf(stderr, "\tpos.size: %lu\n", m_posNodes.size());
+		fprintf(stderr, "\tpos.usedMem: %lu\n", m_posNodes.used_memory());
+		fprintf(stderr, "\tneg.size: %lu\n", m_negNodes.size());
+		fprintf(stderr, "\tneg.usedMem: %lu\n", m_negNodes.used_memory());
 	}
 };
