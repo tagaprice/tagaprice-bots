@@ -1,5 +1,6 @@
 #include "CategoryMapper.h"
 #include "CouchOutput.h"
+#include "Entity.h"
 
 #include <QDir>
 
@@ -39,6 +40,8 @@ public:
 
 		m_nodeChar = 'n';
 		m_wayChar = 'w';
+
+		m_output.queryExistingObjects();
 
 		_initMappers();
 	}
