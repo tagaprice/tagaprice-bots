@@ -36,13 +36,13 @@ public:
 		connect(&http, SIGNAL(finished(QNetworkReply*)), this, SLOT(_queryRequestFinished(QNetworkReply*)));
 		http.get(request);
 
-		if (!m_eventLoop.exec()) {
+		int rc = m_eventLoop.exec();
+		if (!rc) {
 			fprintf(stderr, "done\n");
 		}
 		else {
-			// this doesn't get called yet
-			fprintf(stderr, "failed!\n");
-			exit(1);
+			fprintf(stderr, "failed (code %i)!\n", rc);
+			exit(rc);
 		}
 	}
 
@@ -71,14 +71,14 @@ public:
 		m_outputBuffer.append("\n]\n}\n");
 		http.post(request, m_outputBuffer);
 
-		if (!m_eventLoop.exec()) {
+		int rc = m_eventLoop.exec();
+		if (!rc) {
 			fprintf(stderr, "done\n");
-			return true;
 		}
 		else {
-			fprintf(stderr, "failed!\n");
-			return false;
+			fprintf(stderr, "failed (code %i)!\n", rc);
 		}
+		return rc == 0;
 	}
 
 private slots:
