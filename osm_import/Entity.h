@@ -66,16 +66,22 @@ public:
 		osmTags.insert("_lat", lat);
 		osmTags.insert("_lon", lon);
 
-		insert("osm", osmTags);
-
 		// finally add the real stuff
-		insert("lat", lat);
-		insert("lng", lon);
+		QVariantMap addressMap;
+		addressMap.insert("lat", lat);
+		addressMap.insert("lng", lon);
+		if (osmTags.contains("addr:street") && osmTags.contains("addr:housenumber")) {
+			addressMap.insert("address", QString("%1 %2").arg(osmTags["addr:street"].toString()).arg(osmTags["addr:housenumber"].toString()));
+		}
+		insert("address", addressMap);
+
 		if (!categoryId.isEmpty()) {
 			insert("shopCategoryId", categoryId);
 		}
-		insert("user", "osmImportBot");
+
 		insert("docType", "shop");
+		insert("osm", osmTags);
+		insert("creatorId", "osmImportBot");
 	}
 
 signals:
