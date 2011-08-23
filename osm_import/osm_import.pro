@@ -16,10 +16,12 @@ LIBS += -losmpbf \
 TEMPLATE = app
 SOURCES += main.cpp \
     CategoryMapper.cpp \
-    Settings.cpp
+    Settings.cpp \
+    SyncHttpRequest.cpp
 HEADERS += TapOsmHandler.h \
     CouchOutput.h \
     Entity.h \
     CategoryMapper.h \
-    Settings.h
+    Settings.h \
+    SyncHttpRequest.h
 DEFINES += OSMIUM_WITH_GEOS
