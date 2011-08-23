@@ -28,7 +28,6 @@ public:
 
 		// get the latitude and longitude
 		double lat, lon;
-		osm_object_type_t type = object->get_type();
 		if (const Osmium::OSM::Node *node = dynamic_cast<const Osmium::OSM::Node*>(object)) {
 			lat = node->get_lat();
 			lon = node->get_lon();
