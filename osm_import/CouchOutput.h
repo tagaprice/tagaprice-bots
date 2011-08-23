@@ -120,6 +120,32 @@ public:
 		return true;
 	}
 
+	static bool hasCategory(const QString &categoryId) {
+		SyncHttpRequest http;
+		QNetworkRequest request(QUrl(Settings::getCouchBaseUrl().toString().append("/"+categoryId)));
+		QNetworkReply *reply = http.get(request);
+
+		if (reply->error() == QNetworkReply::ContentNotFoundError) {
+			return false;
+		}
+		else if (reply->error() != QNetworkReply::NoError) {
+			return false;
+		}
+
+		QJson::Parser parser;
+		QVariantMap userObject = parser.parse(reply->readAll()).toMap();
+		if (userObject.contains("docType") && userObject["docType"] == "shopCategory") {
+			// all went well
+		}
+		else {
+			delete reply;
+			return false;
+		}
+
+		delete reply;
+		return true;
+	}
+
 private slots:
 };
 
