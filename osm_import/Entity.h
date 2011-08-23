@@ -5,7 +5,6 @@
 
 #include <QVariantMap>
 
-#include <geos.h>
 #include <geos/algorithm/CentroidArea.h>
 #include <osmium.hpp>
 
