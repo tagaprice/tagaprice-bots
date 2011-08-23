@@ -18,4 +18,4 @@ public:
 	}
 };
 
-#endif // TYPEMAPPER_H
+#endif // CATEGORYMAPPER_H
