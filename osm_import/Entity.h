@@ -1,6 +1,8 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
+#include "Settings.h"
+
 #include <QVariantMap>
 
 #include <geos.h>
@@ -81,7 +83,7 @@ public:
 
 		insert("docType", "shop");
 		insert("osm", osmTags);
-		insert("creatorId", "osmImportBot");
+		insert("creatorId", Settings::getBotUID());
 	}
 
 signals:

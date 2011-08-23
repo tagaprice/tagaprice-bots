@@ -1,6 +1,8 @@
 #ifndef COUCHOUTPUT_H
 #define COUCHOUTPUT_H
 
+#include "Settings.h"
+
 #include <QEventLoop>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -31,7 +33,7 @@ public:
 		fprintf(stderr, "Querying OSM-IDs that already exist in the CouchDB...");
 		QNetworkAccessManager http;
 		QNetworkRequest request;
-		request.setUrl(QUrl("http://127.0.0.1:5984/tagaprice/_design/osm/_view/all"));
+		request.setUrl(QUrl(Settings::getCouchBaseUrl().toString().append("/_design/osm/_view/all")));
 		request.setRawHeader("User-Agent", "MyOwnBrowser 1.0");
 		connect(&http, SIGNAL(finished(QNetworkReply*)), this, SLOT(_queryRequestFinished(QNetworkReply*)));
 		http.get(request);
@@ -63,7 +65,7 @@ public:
 	bool save() {
 		fprintf(stderr, "Storing the new OSM-Objects to the CouchDB...");
 		QNetworkAccessManager http;
-		QNetworkRequest request(QUrl("http://localhost:5984/tagaprice/_bulk_docs"));
+		QNetworkRequest request(QUrl(Settings::getCouchBaseUrl().toString().append("/_bulk_docs")));
 		request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
 		connect(&http, SIGNAL(finished(QNetworkReply*)), this, SLOT(_storeRequestFinished(QNetworkReply*)));
