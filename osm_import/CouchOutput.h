@@ -29,12 +29,36 @@ public:
 		m_outputBuffer.append("\"docs\": [\n");
 	}
 
+	void init() {
+		checkTapUser();
+		queryExistingObjects();
+	}
+
+	void checkTapUser() {
+		fprintf(stderr, "Checking if the UID specified in the config.ini exists and is valid...");
+		QNetworkAccessManager http;
+		QNetworkRequest request;
+		request.setUrl(QUrl(Settings::getCouchBaseUrl().toString().append("/"+Settings::getBotUID())));
+		request.setRawHeader("User-Agent", "OsmImport");
+		connect(&http, SIGNAL(finished(QNetworkReply*)), this, SLOT(_queryRequestFinished(QNetworkReply*)));
+		http.get(request);
+
+		int rc = m_eventLoop.exec();
+		if (!rc) {
+			fprintf(stderr, "done\n");
+		}
+		else {
+			fprintf(stderr, "failed (code %i)!\n", rc);
+			exit(rc);
+		}
+	}
+
 	void queryExistingObjects() {
 		fprintf(stderr, "Querying OSM-IDs that already exist in the CouchDB...");
 		QNetworkAccessManager http;
 		QNetworkRequest request;
 		request.setUrl(QUrl(Settings::getCouchBaseUrl().toString().append("/_design/osm/_view/all")));
-		request.setRawHeader("User-Agent", "MyOwnBrowser 1.0");
+		request.setRawHeader("User-Agent", "OsmImport");
 		connect(&http, SIGNAL(finished(QNetworkReply*)), this, SLOT(_queryRequestFinished(QNetworkReply*)));
 		http.get(request);
 
@@ -114,6 +138,27 @@ private slots:
 
 		delete reply;
 		m_eventLoop.quit();
+	}
+
+	void _userRequestFinished(QNetworkReply *reply) {
+		int rc;
+
+		if (reply->error() != QNetworkReply::NoError) {
+			m_eventLoop.exit(reply->error());
+			return;
+		}
+
+		QJson::Parser parser;
+		QVariantMap userObject = parser.parse(reply->readAll()).toMap();
+		if (userObject.contains("docType") && userObject["docType"] == "user") {
+			rc = 0;
+		}
+		else {
+			rc = 1;
+		}
+
+		delete reply;
+		m_eventLoop.exit(rc);
 	}
 };
 

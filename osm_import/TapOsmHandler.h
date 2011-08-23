@@ -41,7 +41,7 @@ public:
 		m_nodeChar = 'n';
 		m_wayChar = 'w';
 
-		m_output.queryExistingObjects();
+		m_output.init();
 
 		_initMappers();
 	}
