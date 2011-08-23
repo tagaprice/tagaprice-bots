@@ -9,6 +9,10 @@
 #include <geos/algorithm/CentroidArea.h>
 #include <osmium.hpp>
 
+class EntityException {
+
+};
+
 class Entity : public QVariantMap {
 public:
 	explicit Entity(const Osmium::OSM::Object *object, char typeChar, const QString &categoryId) {
@@ -43,8 +47,7 @@ public:
 					lon = centoid.x;
 				}
 				else {
-					clear();
-					return;
+					throw EntityException();
 				}
 
 				delete geometry;
@@ -54,14 +57,12 @@ public:
 				lon = way->get_lon(0);
 			}
 			else {
-				clear();
-				return;
+				throw EntityException();
 			}
 		}
 		else {
 			// Relations aren't supported yet
-			clear();
-			return;
+			throw EntityException();
 		}
 
 		osmTags.insert("_lat", lat);
@@ -83,6 +84,39 @@ public:
 		insert("docType", "shop");
 		insert("osm", osmTags);
 		insert("creatorId", Settings::getBotUID());
+
+		// create title
+		QString title;
+		if (osmTags.contains("addr:street")) {
+			QString nameStr;
+			QString addressStr;
+
+			if (osmTags.contains("name")) {
+				nameStr = osmTags["name"].toString();
+			}
+			else if (osmTags.contains("operator")) {
+				nameStr = osmTags["operator"].toString();
+			}
+
+			if (osmTags.contains("addr:street")) {
+				addressStr = osmTags["addr:street"].toString();
+
+				if (osmTags.contains("addr:city")) {
+					addressStr = QString("%1 %2").arg(osmTags["addr:city"].toString()).arg(addressStr);
+				}
+			}
+
+			if (!nameStr.isEmpty() && !addressStr.isEmpty()) {
+				title = QString("%1 %2").arg(nameStr).arg(addressStr);
+			}
+		}
+		if (!title.isEmpty()) {
+			insert("title", title);
+		}
+		else {
+			// no title could be extracted => fail
+			throw EntityException();
+		}
 	}
 
 signals:

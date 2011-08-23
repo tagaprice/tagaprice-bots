@@ -86,7 +86,7 @@ public:
 
 	void _object(const Osmium::OSM::Object *object, char typeChar) {
 		const char *value = 0;
-		QString categoryId;
+		QString categoryId, selectedTag;
 
 		// try to find a matching tag
 		foreach (QString tagName, m_categoryMappers.keys()) {
@@ -96,7 +96,7 @@ public:
 				if (mapper->hasCategory(curValue)) {
 					QString curCategoryId = mapper->getCategoryId(curValue);
 					value = curValue;
-					m_tagStats[tagName]++;
+					selectedTag = tagName;
 
 					if (!curCategoryId.isEmpty()) {
 						categoryId = curCategoryId;
@@ -107,10 +107,16 @@ public:
 		}
 
 		if (value) {
-			if (typeChar == m_nodeChar) m_nodeCount++;
-			else if (typeChar == m_wayChar) m_wayCount++;
+			try {
+				m_output.addObject(Entity(object, typeChar, categoryId));
 
-			m_output.addObject(Entity(object, typeChar, categoryId));
+				if (typeChar == m_nodeChar) m_nodeCount++;
+				else if (typeChar == m_wayChar) m_wayCount++;
+				m_tagStats[selectedTag]++;
+			}
+			catch (EntityException e) {
+				// skipping this entity as it seems to be invalid
+			}
 		}
 	}
 
