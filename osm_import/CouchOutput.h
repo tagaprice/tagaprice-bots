@@ -2,11 +2,9 @@
 #define COUCHOUTPUT_H
 
 #include "Settings.h"
+#include "SyncHttpRequest.h"
 
 #include <QEventLoop>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
 #include <QSet>
 
 #include <qjson/parser.h>
@@ -18,7 +16,6 @@ class CouchOutput: public QObject {
 	Q_OBJECT
 private:
 	QSet<QString> m_existingIds;
-	QEventLoop m_eventLoop;
 	bool m_bFirstDoc;
 	QByteArray m_outputBuffer;
 
@@ -36,40 +33,57 @@ public:
 
 	void checkTapUser() {
 		fprintf(stderr, "Checking if the UID specified in the config.ini exists and is valid...");
-		QNetworkAccessManager http;
+		SyncHttpRequest http;
 		QNetworkRequest request;
 		request.setUrl(QUrl(Settings::getCouchBaseUrl().toString().append("/"+Settings::getBotUID())));
 		request.setRawHeader("User-Agent", "OsmImport");
-		connect(&http, SIGNAL(finished(QNetworkReply*)), this, SLOT(_queryRequestFinished(QNetworkReply*)));
-		http.get(request);
+		QNetworkReply *reply = http.get(request);
 
-		int rc = m_eventLoop.exec();
-		if (!rc) {
+		if (reply->error() != QNetworkReply::NoError) {
+			fprintf(stderr, "failed (%s)!\n", reply->errorString().toLocal8Bit().constData());
+			exit(1);
+		}
+
+		QJson::Parser parser;
+		QVariantMap userObject = parser.parse(reply->readAll()).toMap();
+		if (userObject.contains("docType") && userObject["docType"] == "user") {
 			fprintf(stderr, "done\n");
 		}
 		else {
-			fprintf(stderr, "failed (code %i)!\n", rc);
-			exit(rc);
+			fprintf(stderr, "failed (not a TaP-user)");
 		}
+
+		delete reply;
 	}
 
 	void queryExistingObjects() {
 		fprintf(stderr, "Querying OSM-IDs that already exist in the CouchDB...");
-		QNetworkAccessManager http;
+		SyncHttpRequest http;
 		QNetworkRequest request;
 		request.setUrl(QUrl(Settings::getCouchBaseUrl().toString().append("/_design/osm/_view/all")));
 		request.setRawHeader("User-Agent", "OsmImport");
-		connect(&http, SIGNAL(finished(QNetworkReply*)), this, SLOT(_queryRequestFinished(QNetworkReply*)));
-		http.get(request);
+		QNetworkReply *reply = http.get(request);
 
-		int rc = m_eventLoop.exec();
-		if (!rc) {
-			fprintf(stderr, "done\n");
+		if (reply->error() != QNetworkReply::NoError) {
+			fprintf(stderr, "failed (%s)!\n", reply->errorString().toLocal8Bit().constData());
+			exit(1);
+
+			return;
 		}
-		else {
-			fprintf(stderr, "failed (code %i)!\n", rc);
-			exit(rc);
+		QByteArray json = reply->readAll();
+		QJson::Parser parser;
+		QVariantMap responseData = parser.parse(json).toMap();
+
+		if (responseData.contains("rows")) {
+			QVariantList list = responseData["rows"].toList();
+			foreach (QVariant entry, list) {
+				QVariantMap entryMap = entry.toMap();
+				m_existingIds.insert(entryMap["key"].toString());
+			}
 		}
+
+		delete reply;
+		fprintf(stderr, "done\n");
 	}
 
 	void addObject(const QVariant &entity) {
@@ -88,78 +102,25 @@ public:
 
 	bool save() {
 		fprintf(stderr, "Storing the new OSM-Objects to the CouchDB...");
-		QNetworkAccessManager http;
+		SyncHttpRequest http;
 		QNetworkRequest request(QUrl(Settings::getCouchBaseUrl().toString().append("/_bulk_docs")));
 		request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-		connect(&http, SIGNAL(finished(QNetworkReply*)), this, SLOT(_storeRequestFinished(QNetworkReply*)));
-
 		m_outputBuffer.append("\n]\n}\n");
-		http.post(request, m_outputBuffer);
+		QNetworkReply *reply = http.post(request, m_outputBuffer);
 
-		int rc = m_eventLoop.exec();
-		if (!rc) {
-			fprintf(stderr, "done\n");
+		if (reply->error() != QNetworkReply::NoError) {
+			fprintf(stderr, "failed (%s)!\n", reply->errorString().toLocal8Bit().constData());
+			return false;
 		}
-		else {
-			fprintf(stderr, "failed (code %i)!\n", rc);
-		}
-		return rc == 0;
+
+		delete reply;
+
+		fprintf(stderr, "done\n");
+		return true;
 	}
 
 private slots:
-	void _queryRequestFinished(QNetworkReply *reply) {
-		if (reply->error() != QNetworkReply::NoError) {
-			m_eventLoop.exit(reply->error());
-			return;
-		}
-		QByteArray json = reply->readAll();
-		QJson::Parser parser;
-		QVariantMap responseData = parser.parse(json).toMap();
-
-		if (responseData.contains("rows")) {
-			QVariantList list = responseData["rows"].toList();
-			foreach (QVariant entry, list) {
-				QVariantMap entryMap = entry.toMap();
-				m_existingIds.insert(entryMap["key"].toString());
-			}
-		}
-
-		delete reply;
-
-		m_eventLoop.quit();
-	}
-
-	void _storeRequestFinished(QNetworkReply *reply) {
-		if (reply->error() != QNetworkReply::NoError) {
-			m_eventLoop.exit(reply->error());
-			return;
-		}
-
-		delete reply;
-		m_eventLoop.quit();
-	}
-
-	void _userRequestFinished(QNetworkReply *reply) {
-		int rc;
-
-		if (reply->error() != QNetworkReply::NoError) {
-			m_eventLoop.exit(reply->error());
-			return;
-		}
-
-		QJson::Parser parser;
-		QVariantMap userObject = parser.parse(reply->readAll()).toMap();
-		if (userObject.contains("docType") && userObject["docType"] == "user") {
-			rc = 0;
-		}
-		else {
-			rc = 1;
-		}
-
-		delete reply;
-		m_eventLoop.exit(rc);
-	}
 };
 
 #endif // COUCHOUTPUT_H
