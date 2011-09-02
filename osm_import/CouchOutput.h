@@ -86,18 +86,22 @@ public:
 		fprintf(stderr, "done\n");
 	}
 
-	void addObject(const QVariant &entity) {
+	bool addObject(const QVariant &entity) {
 		QVariantMap osmMap = entity.toMap()["osm"].toMap();
 		QString id = osmMap["_id"].toString();
+		bool rc = false;
+
 		if (!m_existingIds.contains(id)) {
 			if (!m_bFirstDoc) {
 				m_outputBuffer.append(",\n");
 			}
 			else m_bFirstDoc = false;
 			QJson::Serializer serializer;
-			m_outputBuffer.append(serializer.serialize(entity).constData());
+			QByteArray serialized = serializer.serialize(entity).constData();
+			m_outputBuffer.append(serialized);
+			rc = true;
 		}
-		//else qDebug("Skipping %s", id.toLocal8Bit().constData());
+		return rc;
 	}
 
 	bool save() {
@@ -122,6 +126,8 @@ public:
 
 	static bool hasCategory(const QString &categoryId) {
 		SyncHttpRequest http;
+		QString baseUrl = QUrl(Settings::getCouchBaseUrl().toString().append("/"+categoryId)).toString();
+		//qDebug("QueryUrl: %s", baseUrl.toLocal8Bit().constData());
 		QNetworkRequest request(QUrl(Settings::getCouchBaseUrl().toString().append("/"+categoryId)));
 		QNetworkReply *reply = http.get(request);
 
@@ -133,8 +139,8 @@ public:
 		}
 
 		QJson::Parser parser;
-		QVariantMap userObject = parser.parse(reply->readAll()).toMap();
-		if (userObject.contains("docType") && userObject["docType"] == "shopCategory") {
+		QVariantMap categoryObject = parser.parse(reply->readAll()).toMap();
+		if (categoryObject.contains("docType") && categoryObject["docType"] == "shopCategory") {
 			// all went well
 		}
 		else {
