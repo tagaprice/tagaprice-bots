@@ -28,13 +28,13 @@ QString Settings::getCouchHost() {
 }
 
 int Settings::getCouchPort() {
-	return m_settings.value("couchdb.port", 5984).toInt();
+	return m_settings.value("couchdb/port", 5984).toInt();
 }
 
 QString Settings::getCouchPwd() {
-	return m_settings.value("couchdb.password").toString();
+	return m_settings.value("couchdb/password").toString();
 }
 
 QString Settings::getCouchUser() {
-	return m_settings.value("couchdb.user").toString();
+	return m_settings.value("couchdb/user").toString();
 }
