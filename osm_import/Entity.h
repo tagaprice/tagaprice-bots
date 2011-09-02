@@ -69,15 +69,27 @@ public:
 
 		// finally add the real stuff
 		QVariantMap addressMap;
-		addressMap.insert("lat", lat);
-		addressMap.insert("lng", lon);
-		if (osmTags.contains("addr:street") && osmTags.contains("addr:housenumber")) {
-			addressMap.insert("address", QString("%1 %2").arg(osmTags["addr:street"].toString()).arg(osmTags["addr:housenumber"].toString()));
+		QVariantMap posMap;
+		posMap.insert("lat", lat);
+		posMap.insert("lon", lon);
+		addressMap.insert("pos", posMap);
+		if (osmTags.contains("addr:city")) {
+			addressMap.insert("city", osmTags["addr:city"]);
 		}
+		if (osmTags.contains("addr:country")) {
+			addressMap.insert("countrycode", osmTags["addr:country"]);
+		}
+		if (osmTags.contains("addr:postcode")) {
+			addressMap.insert("postalcode", osmTags["addr:postcode"]);
+		}
+		if (osmTags.contains("addr:street")) {
+			addressMap.insert("street", osmTags["addr:street"]);
+		}
+
 		insert("address", addressMap);
 
 		if (!categoryId.isEmpty()) {
-			insert("shopCategoryId", categoryId);
+			insert("categoryId", categoryId);
 		}
 
 		insert("docType", "shop");
@@ -86,29 +98,14 @@ public:
 
 		// create title
 		QString title;
-		if (osmTags.contains("addr:street")) {
-			QString nameStr;
-			QString addressStr;
 
-			if (osmTags.contains("name")) {
-				nameStr = osmTags["name"].toString();
-			}
-			else if (osmTags.contains("operator")) {
-				nameStr = osmTags["operator"].toString();
-			}
-
-			if (osmTags.contains("addr:street")) {
-				addressStr = osmTags["addr:street"].toString();
-
-				if (osmTags.contains("addr:city")) {
-					addressStr = QString("%1 %2").arg(osmTags["addr:city"].toString()).arg(addressStr);
-				}
-			}
-
-			if (!nameStr.isEmpty() && !addressStr.isEmpty()) {
-				title = QString("%1 %2").arg(nameStr).arg(addressStr);
-			}
+		if (osmTags.contains("name")) {
+			title = osmTags["name"].toString();
 		}
+		else if (osmTags.contains("operator")) {
+			title = osmTags["operator"].toString();
+		}
+
 		if (!title.isEmpty()) {
 			insert("title", title);
 		}
